@@ -1,0 +1,1494 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MCE 团队学习需求调研</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 QRCode.js 用于生成真实可扫描二维码 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- 引入 Google Fonts: Noto Sans SC -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f1f5f9;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* 模拟微信小程序导航栏胶囊按钮 */
+        .wx-capsule {
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            backdrop-filter: blur(8px);
+        }
+        /* 自定义滚动条隐藏 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* 评分按钮动画 */
+        .score-btn {
+            transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .score-btn:active {
+            transform: scale(0.92);
+        }
+        /* 选项卡片选中态 */
+        .option-card {
+            transition: all 0.2s ease;
+        }
+        .option-card:active {
+            transform: scale(0.99);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex justify-center items-start sm:py-6">
+
+    <!-- 模拟手机小程序容器 (在桌面端居中显示为精致的手机端界面，移动端全屏适配) -->
+    <div id="app-container" class="w-full max-w-[430px] min-h-screen sm:min-h-[844px] sm:max-h-[880px] bg-slate-50 sm:rounded-[38px] sm:shadow-2xl sm:border-[8px] sm:border-slate-900 flex flex-col relative overflow-hidden">
+        
+        <!-- 顶部小程序状态栏与导航栏 -->
+        <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-100 px-4 pt-3 pb-2.5 select-none">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <button id="btn-back" onclick="handleBack()" class="hidden p-1.5 -ml-1.5 rounded-full hover:bg-slate-100 text-slate-700">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M15 19l-7-7 7-7"/></svg>
+                    </button>
+                    <div>
+                        <h1 class="text-[16px] font-bold text-slate-800 tracking-tight flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-teal-500 inline-block"></span>
+                            MCE 团队学习调研
+                        </h1>
+                    </div>
+                </div>
+
+                <!-- 微信小程序标准右上角胶囊 + 快捷二维码入口 -->
+                <div class="flex items-center space-x-2">
+                    <button onclick="openQrModal()" title="分享调研二维码" class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-teal-50 text-teal-700 text-xs font-medium border border-teal-200/70 hover:bg-teal-100 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                        <span>扫码填报</span>
+                    </button>
+                    <div class="wx-capsule flex items-center rounded-full px-2.5 py-1 space-x-2 text-slate-700">
+                        <button onclick="openAnalyticsModal()" title="查看调研分析看板" class="hover:text-teal-600 transition">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2.5"/><circle cx="19" cy="12" r="2"/></svg>
+                        </button>
+                        <div class="w-[1px] h-3.5 bg-slate-300"></div>
+                        <button onclick="resetSurveyConfirm()" title="重置问卷" class="hover:text-rose-500 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 进度条区域 (填写问卷时显示) -->
+            <div id="progress-wrapper" class="hidden mt-2.5">
+                <div class="flex justify-between items-center text-[11px] text-slate-500 mb-1">
+                    <span id="step-label" class="font-medium text-teal-700">第一部分：基本信息</span>
+                    <div class="flex items-center gap-2">
+                        <span id="role-badge" class="hidden px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 font-medium text-[10px]"></span>
+                        <span id="progress-percent" class="font-semibold text-slate-700">20%</span>
+                    </div>
+                </div>
+                <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-300" style="width: 20%"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主内容滚动区 -->
+        <main id="main-scroll" class="flex-1 overflow-y-auto no-scrollbar pb-24">
+            
+            <!-- 视图 0：欢迎页 / 入口页 -->
+            <section id="view-welcome" class="p-5 space-y-5">
+                <!-- 头部视觉卡片 -->
+                <div class="bg-gradient-to-br from-teal-600 via-teal-700 to-emerald-800 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+                    <div class="absolute -right-6 -top-6 w-28 h-28 bg-white/10 rounded-full blur-xl"></div>
+                    <div class="absolute -left-6 -bottom-8 w-24 h-24 bg-emerald-300/10 rounded-full blur-lg"></div>
+                    
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/15 text-teal-50 text-xs font-medium mb-3 backdrop-blur-sm">
+                        <span>⏱️ 预计用时 5 分钟</span>
+                        <span>•</span>
+                        <span>🔒 匿名填写</span>
+                    </div>
+                    <h2 class="text-xl font-bold leading-snug mb-2">MCE 团队学习需求调研问卷</h2>
+                    <p class="text-teal-100 text-xs leading-relaxed">
+                        调研结果将直接用于设计团队专属学习小工具，帮助大家更快解决业务难题。请按真实工作感受作答！
+                    </p>
+                </div>
+
+                <!-- 智能分流路径说明卡片 -->
+                <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+                            双路径智能分流设计
+                        </h3>
+                        <span class="text-[11px] text-slate-400">自动匹配专属题目</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <!-- 渠道岗路径 -->
+                        <div class="p-3 rounded-xl bg-sky-50/70 border border-sky-100">
+                            <div class="flex items-center gap-1.5 text-sky-700 font-bold text-xs mb-1">
+                                <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                                渠道岗路径
+                            </div>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">
+                                完成基础与现状后，作答<strong class="text-sky-700">渠道核心 10 项</strong>能力评估，自动跳过生态专项题，用时更短。
+                            </p>
+                        </div>
+                        <!-- 生态/管理岗路径 -->
+                        <div class="p-3 rounded-xl bg-indigo-50/70 border border-indigo-100">
+                            <div class="flex items-center gap-1.5 text-indigo-700 font-bold text-xs mb-1">
+                                <span class="w-2 h-2 rounded-full bg-indigo-500"></span>
+                                生态 / 管理岗路径
+                            </div>
+                            <p class="text-[11px] text-slate-600 leading-relaxed">
+                                覆盖渠道通用主题 + <strong class="text-indigo-700">生态运营/患者服务 9 项</strong>专项评估，全方位定位痛点。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 扫码分享卡片（内嵌二维码预览，方便随时扫码） -->
+                <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex items-center justify-between gap-3">
+                    <div class="space-y-1 flex-1">
+                        <div class="text-xs font-bold text-slate-800 flex items-center gap-1">
+                            <span>📱 微信扫码快速填写</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500 leading-normal">
+                            支持转发给团队成员或保存海报至微信群，手机扫码即刻开启对应岗位路径。
+                        </p>
+                        <button onclick="openQrModal()" class="mt-1 inline-flex items-center text-xs font-semibold text-teal-600 hover:text-teal-700">
+                            放大二维码 / 保存海报 →
+                        </button>
+                    </div>
+                    <div onclick="openQrModal()" class="w-20 h-20 p-1.5 bg-white border border-slate-200 rounded-xl shadow-inner flex items-center justify-center cursor-pointer shrink-0 hover:border-teal-400 transition">
+                        <div id="mini-qrcode"></div>
+                    </div>
+                </div>
+
+                <!-- 管理员/发布者数据看板入口 -->
+                <div class="flex items-center justify-between px-1 pt-1">
+                    <button onclick="openAnalyticsModal()" class="text-xs text-slate-500 hover:text-teal-600 flex items-center gap-1 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        <span>查看调研统计与缺口分析看板</span>
+                    </button>
+                    <span class="text-[11px] text-slate-400">v1.0 精简版</span>
+                </div>
+            </section>
+
+            <!-- 视图 1：第一部分 基本信息 (Q1 - Q3) -->
+            <section id="view-step-1" class="hidden p-4 space-y-4">
+                <div class="bg-teal-50/80 border border-teal-100 rounded-xl p-3 text-xs text-teal-800 flex items-start gap-2">
+                    <span class="text-base leading-none">🧭</span>
+                    <div>请先选择您的岗位类型，系统将根据您的岗位自动为您配置后续专属学习内容评估路径。</div>
+                </div>
+
+                <!-- Q1 -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3" id="q1-card">
+                    <div class="flex items-start justify-between">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q1.</span>您的岗位类型？
+                            <span class="text-rose-500 ml-0.5">*</span>
+                        </h3>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-500">单选 · 决定路径</span>
+                    </div>
+                    <div class="space-y-2.5" id="q1-options"></div>
+                </div>
+
+                <!-- Q2 -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3" id="q2-card">
+                    <div class="flex items-start justify-between">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q2.</span>您在 MCE 或相关渠道工作的年限？
+                            <span class="text-rose-500 ml-0.5">*</span>
+                        </h3>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-500">单选</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2.5" id="q2-options"></div>
+                </div>
+
+                <!-- Q3 -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-2.5">
+                    <div class="flex items-start justify-between">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q3.</span>您所在的大区或省份？
+                        </h3>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-600">选填 · 保护匿名</span>
+                    </div>
+                    <input type="text" id="q3-input" oninput="surveyData.q3 = this.value" placeholder="例如：华东大区 / 广东省（选填，不填亦可）" class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition">
+                </div>
+            </section>
+
+            <!-- 视图 2：第二部分 学习现状 (Q4 - Q7) -->
+            <section id="view-step-2" class="hidden p-4 space-y-4">
+                <!-- Q4 -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex items-start justify-between">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q4.</span>目前您主要通过哪些方式获取工作知识？
+                            <span class="text-rose-500 ml-0.5">*</span>
+                        </h3>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-500 shrink-0">多选</span>
+                    </div>
+                    <div class="space-y-2" id="q4-options"></div>
+                </div>
+
+                <!-- Q5 -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex items-start justify-between">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q5.</span>工作中需要某项知识或资料时，您能快速找到吗？
+                            <span class="text-rose-500 ml-0.5">*</span>
+                        </h3>
+                    </div>
+                    <div class="pt-1">
+                        <div class="grid grid-cols-5 gap-2" id="q5-options"></div>
+                        <div class="flex justify-between text-[11px] text-slate-400 mt-2 px-1">
+                            <span>1 = 基本找不到</span>
+                            <span>5 = 随时能找到</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Q6 -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-2.5">
+                    <div class="flex items-start justify-between">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q6.</span>最近一个月，工作中遇到的哪件事让您最希望有人教您？
+                            <span class="text-rose-500 ml-0.5">*</span>
+                        </h3>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-rose-50 text-rose-600 shrink-0">必填</span>
+                    </div>
+                    <textarea id="q6-input" rows="3" oninput="surveyData.q6 = this.value" placeholder="请简单描述一个具体场景或业务难题（如：某省新品挂网价格联动测算、医院双通道准入沟通等）..." class="w-full p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition resize-none"></textarea>
+                </div>
+
+                <!-- Q7 -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex items-start justify-between">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q7.</span>阻碍您学习的主要原因？
+                            <span class="text-rose-500 ml-0.5">*</span>
+                        </h3>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-medium shrink-0">最多选 3 项</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2" id="q7-options"></div>
+                </div>
+            </section>
+
+            <!-- 视图 3：第三部分 学习内容需求 (Q8, 条件Q9, Q10) -->
+            <section id="view-step-3" class="hidden p-4 space-y-4">
+                <!-- 路径提示横幅 -->
+                <div id="path-notice-banner" class="rounded-xl p-3 text-xs flex items-start gap-2 border"></div>
+
+                <!-- 评分图例说明 -->
+                <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 space-y-1.5">
+                    <div class="text-xs font-bold text-slate-700">📊 双维度打分说明（1 - 5 分）</div>
+                    <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-600">
+                        <div class="bg-teal-50/70 p-2 rounded-lg">
+                            <span class="font-bold text-teal-700">需要程度：</span>1=不需要 → 5=非常需要
+                        </div>
+                        <div class="bg-indigo-50/70 p-2 rounded-lg">
+                            <span class="font-bold text-indigo-700">当前掌握：</span>1=完全不了解 → 5=非常熟练
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Q8 全员必答 -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between px-1">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q8.</span>渠道与商业通用主题（全员）
+                            <span class="text-rose-500">*</span>
+                        </h3>
+                        <span id="q8-counter" class="text-xs font-medium text-slate-500">0/10 项已评</span>
+                    </div>
+                    <div id="q8-list" class="space-y-3"></div>
+                </div>
+
+                <!-- Q9 生态岗、大区经理、项目经理专属（渠道岗自动隐藏跳过） -->
+                <div id="q9-section" class="hidden space-y-3 pt-2 border-t-2 border-dashed border-indigo-200">
+                    <div class="bg-indigo-600 text-white rounded-xl p-3 flex items-center justify-between shadow-sm">
+                        <div>
+                            <div class="text-xs font-bold flex items-center gap-1.5">
+                                <span>✨ 生态与管理专项模块 (Q9)</span>
+                            </div>
+                            <div class="text-[11px] text-indigo-100 mt-0.5">当前岗位：<span id="q9-role-name" class="font-semibold underline"></span>（需作答以下 9 项）</div>
+                        </div>
+                        <span id="q9-counter" class="text-xs font-bold bg-white/20 px-2.5 py-1 rounded-lg">0/9</span>
+                    </div>
+                    <div id="q9-list" class="space-y-3"></div>
+                </div>
+
+                <!-- Q10 开放题必填 -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-2.5">
+                    <div class="flex items-start justify-between">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q10.</span>还有哪些上面没有列出、但您希望学习的主题？
+                            <span class="text-rose-500 ml-0.5">*</span>
+                        </h3>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-rose-50 text-rose-600 shrink-0">必填</span>
+                    </div>
+                    <textarea id="q10-input" rows="2" oninput="surveyData.q10 = this.value" placeholder="如没有其他补充，可填写“暂无”..." class="w-full p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition resize-none"></textarea>
+                </div>
+            </section>
+
+            <!-- 视图 4：第四部分 学习工具使用偏好 (Q11, Q13 - Q16) -->
+            <section id="view-step-4" class="hidden p-4 space-y-4">
+                <!-- Q11 (对应原问卷编号 Q11) -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex items-start justify-between">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q11.</span>您更喜欢哪种内容形式？
+                            <span class="text-rose-500 ml-0.5">*</span>
+                        </h3>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-medium shrink-0">最多选 2 项</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2" id="q11-options"></div>
+                </div>
+
+                <!-- Q12 (原问卷编号 Q13：单次学习时长) -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex items-start justify-between">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q12.</span>您单次学习的合适时长？
+                            <span class="text-rose-500 ml-0.5">*</span>
+                        </h3>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-500">单选</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2" id="q13-options"></div>
+                </div>
+
+                <!-- Q13 (原问卷编号 Q14：最方便入口) -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex items-start justify-between">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q13.</span>您最方便使用的入口？
+                            <span class="text-rose-500 ml-0.5">*</span>
+                        </h3>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-500">单选</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2" id="q14-options"></div>
+                </div>
+
+                <!-- Q14 (原问卷编号 Q15：功能期待程度) -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex items-start justify-between">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q14.</span>如果开发一个学习小工具，您对以下功能的期待程度？
+                            <span class="text-rose-500 ml-0.5">*</span>
+                        </h3>
+                    </div>
+                    <p class="text-[11px] text-slate-500">请为以下 10 项功能打分（1分=不期待，5分=非常期待）</p>
+                    <div class="space-y-3 pt-1" id="q15-list"></div>
+                </div>
+
+                <!-- Q15 (原问卷编号 Q16：推送频率) -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex items-start justify-between">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q15.</span>您希望多久收到一次学习推送？
+                            <span class="text-rose-500 ml-0.5">*</span>
+                        </h3>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-500">单选</span>
+                    </div>
+                    <div class="space-y-2" id="q16-options"></div>
+                </div>
+            </section>
+
+            <!-- 视图 5：第五部分 反馈与贡献 (Q17 - Q19) -->
+            <section id="view-step-5" class="hidden p-4 space-y-4">
+                <!-- Q16 (原编号 Q17) -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-2.5">
+                    <div class="flex items-start justify-between">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q16.</span>您对目前学习方式的改进意见？
+                        </h3>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-500">选填</span>
+                    </div>
+                    <textarea id="q17-input" rows="3" oninput="surveyData.q17 = this.value" placeholder="分享您的想法或建议..." class="w-full p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition resize-none"></textarea>
+                </div>
+
+                <!-- Q17 (原编号 Q18) -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex items-start justify-between">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q17.</span>您是否愿意为学习工具贡献内容？
+                            <span class="text-rose-500 ml-0.5">*</span>
+                        </h3>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-500">单选</span>
+                    </div>
+                    <div class="space-y-2" id="q18-options"></div>
+                </div>
+
+                <!-- Q18 (原编号 Q19) -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-2.5">
+                    <div class="flex items-start justify-between">
+                        <h3 class="text-sm font-bold text-slate-800">
+                            <span class="text-teal-600 mr-1">Q18.</span>对学习小工具，您还有什么期待或建议？
+                        </h3>
+                        <span class="text-[11px] px-2 py-0.5 rounded bg-slate-100 text-slate-500">选填</span>
+                    </div>
+                    <textarea id="q19-input" rows="3" oninput="surveyData.q19 = this.value" placeholder="任何天马行空的想法都欢迎告诉我们..." class="w-full p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition resize-none"></textarea>
+                </div>
+            </section>
+
+            <!-- 视图 6：提交成功与个人缺口诊断报告 -->
+            <section id="view-complete" class="hidden p-5 space-y-4">
+                <div class="bg-white rounded-2xl p-6 text-center shadow-sm border border-slate-100 space-y-3">
+                    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto">
+                        <svg class="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                    <h2 class="text-lg font-bold text-slate-800">感谢您的真诚反馈！</h2>
+                    <p class="text-xs text-slate-500 leading-relaxed">
+                        您的调研结果已匿名录入 MCE 学习小工具需求库。系统已根据您的作答为您生成专属<strong class="text-teal-600">学习缺口诊断预览</strong>。
+                    </p>
+                </div>
+
+                <!-- 个人学习缺口 TOP 推荐 -->
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                            <span>🎯 您的优先学习主题 TOP 5</span>
+                        </h3>
+                        <span class="text-[11px] text-slate-400">缺口 = 需要 - 掌握</span>
+                    </div>
+                    <div id="personal-gap-list" class="space-y-2.5"></div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <button onclick="openQrModal()" class="py-3 px-4 rounded-xl bg-white border border-slate-200 text-slate-700 text-xs font-bold shadow-sm hover:bg-slate-50 transition flex items-center justify-center gap-1.5">
+                        <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                        <span>转发二维码给同事</span>
+                    </button>
+                    <button onclick="openAnalyticsModal()" class="py-3 px-4 rounded-xl bg-teal-600 text-white text-xs font-bold shadow-sm hover:bg-teal-700 transition flex items-center justify-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        <span>查看团队整体看板</span>
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <!-- 底部固定操作栏 -->
+        <footer id="bottom-bar" class="absolute bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-slate-100 p-4 z-20">
+            <!-- 欢迎页按钮 -->
+            <div id="footer-welcome">
+                <button onclick="startSurvey()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-bold text-sm shadow-lg shadow-teal-600/25 hover:opacity-95 active:scale-[0.99] transition flex items-center justify-center gap-2">
+                    <span>开始填写调研问卷</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                </button>
+            </div>
+
+            <!-- 表单步骤按钮 -->
+            <div id="footer-steps" class="hidden flex items-center gap-3">
+                <button onclick="prevStep()" id="btn-prev" class="px-5 py-3 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm hover:bg-slate-200 transition">
+                    上一步
+                </button>
+                <button onclick="nextStep()" id="btn-next" class="flex-1 py-3 rounded-xl bg-teal-600 text-white font-bold text-sm shadow-md shadow-teal-600/20 hover:bg-teal-700 transition">
+                    下一步
+                </button>
+            </div>
+        </footer>
+
+        <!-- 弹窗 1：扫码填写海报 & 二维码分享模态框 -->
+        <div id="modal-qr" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="bg-white w-full max-w-[360px] rounded-3xl overflow-hidden shadow-2xl animate-fade-in">
+                <!-- 海报主体区（用于生成可保存图片） -->
+                <div id="poster-capture-area" class="bg-gradient-to-br from-teal-700 via-teal-800 to-slate-900 p-6 text-white text-center relative">
+                    <div class="inline-block px-3 py-1 rounded-full bg-white/15 text-teal-100 text-[11px] font-medium mb-2">
+                        MCE 团队能力提升计划
+                    </div>
+                    <h3 class="text-lg font-bold tracking-wide">学习需求调研问卷</h3>
+                    <p class="text-xs text-teal-200 mt-1">支持「渠道岗」与「生态岗」智能分流填报</p>
+
+                    <!-- 二维码白底卡片 -->
+                    <div class="bg-white rounded-2xl p-4 my-4 mx-auto w-52 shadow-xl">
+                        <div id="modal-qrcode" class="flex justify-center items-center"></div>
+                        <div class="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-center gap-1.5 text-[11px] text-slate-600 font-medium">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span>微信扫一扫 · 约5分钟完成</span>
+                        </div>
+                    </div>
+
+                    <!-- 岗位快速直达参数切换（生成带默认岗位参数的专属码） -->
+                    <div class="bg-white/10 rounded-xl p-2.5 text-left space-y-1.5">
+                        <div class="text-[11px] text-teal-100 font-medium flex items-center justify-between">
+                            <span>切换专属入口码（可选）：</span>
+                            <span id="qr-mode-tag" class="text-[10px] bg-teal-500/40 px-1.5 py-0.5 rounded text-white">通用全岗位码</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button onclick="updateQrUrl('all')" id="qr-btn-all" class="py-1 px-2 rounded-lg text-[11px] font-semibold bg-white text-teal-800 transition">通用码</button>
+                            <button onclick="updateQrUrl('channel')" id="qr-btn-channel" class="py-1 px-2 rounded-lg text-[11px] font-medium bg-white/15 text-white hover:bg-white/25 transition">渠道岗直达</button>
+                            <button onclick="updateQrUrl('eco')" id="qr-btn-eco" class="py-1 px-2 rounded-lg text-[11px] font-medium bg-white/15 text-white hover:bg-white/25 transition">生态岗直达</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 底部操作按钮 -->
+                <div class="p-4 bg-white space-y-2.5">
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <button onclick="downloadQrImage()" class="py-2.5 px-3 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 transition flex items-center justify-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <span>保存二维码图片</span>
+                        </button>
+                        <button onclick="copySurveyLink()" class="py-2.5 px-3 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold hover:bg-slate-200 transition flex items-center justify-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                            <span>复制问卷链接</span>
+                        </button>
+                    </div>
+                    <button onclick="closeQrModal()" class="w-full py-2 text-xs text-slate-400 hover:text-slate-600 font-medium">
+                        关闭窗口
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 弹窗 2：发布者分析看板（缺口分析 & 岗位交叉对比） -->
+        <div id="modal-analytics" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-end sm:items-center justify-center">
+            <div class="bg-slate-50 w-full max-w-[430px] h-[88vh] sm:h-[800px] rounded-t-3xl sm:rounded-3xl flex flex-col overflow-hidden shadow-2xl">
+                <div class="bg-white px-5 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-800">📊 调研分析与缺口诊断看板</h3>
+                        <p class="text-[11px] text-slate-500">基于「需要程度 - 掌握度」自动排序优先级</p>
+                    </div>
+                    <button onclick="closeAnalyticsModal()" class="p-2 rounded-full bg-slate-100 text-slate-500 hover:bg-slate-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <!-- 岗位过滤 Tab -->
+                <div class="bg-white px-4 py-2.5 border-b border-slate-100 flex items-center gap-2 shrink-0">
+                    <button onclick="renderAnalytics('all')" id="tab-ana-all" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-600 text-white">全员汇总</button>
+                    <button onclick="renderAnalytics('channel')" id="tab-ana-channel" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600">渠道岗</button>
+                    <button onclick="renderAnalytics('eco')" id="tab-ana-eco" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600">生态/管理岗</button>
+                </div>
+
+                <div id="analytics-body" class="flex-1 overflow-y-auto p-4 space-y-4">
+                    <!-- 动态渲染分析内容 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 轻提示 Toast -->
+        <div id="toast" class="hidden fixed top-16 left-1/2 -translate-x-1/2 z-50 bg-slate-800/95 text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-lg transition-opacity duration-200 whitespace-nowrap">
+            提示信息
+        </div>
+
+    </div>
+
+    <script>
+        // ==================== 1. 问卷元数据配置 ====================
+        const SURVEY_CONFIG = {
+            q1: [
+                { value: '渠道岗', desc: '聚焦商业流通、准入、集采与合规路径', tag: '精简路径 (跳过Q9)', color: 'sky' },
+                { value: '生态岗', desc: '聚焦患者服务、商保TPA、院内外联动等', tag: '完整路径 (含Q9专项)', color: 'indigo' },
+                { value: '大区经理', desc: '区域业务统筹与团队能力建设', tag: '完整路径 (含Q9专项)', color: 'indigo' },
+                { value: '项目经理', desc: '创新项目设计与跨部门协同落地', tag: '完整路径 (含Q9专项)', color: 'indigo' }
+            ],
+            q2: ['1 年以内', '1-3 年', '3-5 年', '5 年以上'],
+            q4: [
+                '周会和团队会议',
+                '向同事或上级请教',
+                '公司学习平台',
+                '外部公众号、社群、行业报告',
+                '自己上网搜索',
+                '其他'
+            ],
+            q7: [
+                '没时间',
+                '内容太散找不到',
+                '内容过时',
+                '内容和实际工作脱节',
+                '缺少系统的学习路径',
+                '不知道该学什么',
+                '没有人带',
+                '缺少练习和检验',
+                '其他'
+            ],
+            // Q8 全员必答 10 项（严格对应附件清单）
+            q8: [
+                '两票制、药品流通和税务基础',
+                '集采规则与流程（国家集采、省级 GPO）',
+                '新品挂网与各省挂网规则',
+                '价格治理（四同、三同、差比价、价差标识）',
+                '医院准入流程与绿通',
+                '双通道政策与各省落地差异',
+                '院外渠道与电商模式（DTP、DTC、O2O、互联网医院、电子处方流转）',
+                '供应链与备货管理（短效期、流感季、罕见病）',
+                '商业公司管理与回款',
+                '渠道合规（药店合规、价格管理、飞检）'
+            ],
+            // Q9 生态岗、大区经理、项目经理作答（渠道岗跳过）
+            q9: [
+                '患者关爱项目的设计与运营',
+                '患者数据指标解读（复购率、DoT、患者获益）',
+                '商保、TPA 合作与患者支付方案',
+                '慈善赠药项目流程与合规',
+                '院内外联动与三医联动模式',
+                '驻科药师、院内科研、患者管理科室',
+                '各疾病领域诊疗路径与分级诊疗（乳腺、肺癌、血液、眼科、免疫、流感）',
+                '新业绩/业务数据洞察与复盘',
+                '政策和行业共识跟踪（白皮书、专家共识、卫健委政策）'
+            ],
+            q11: [
+                '一页纸或知识卡片',
+                '图文文章',
+                '3-5 分钟短视频',
+                '音频',
+                '完整版 PPT',
+                '案例复盘',
+                '问答对话',
+                '其他'
+            ],
+            q13: ['3 分钟以内', '3-5 分钟', '5-10 分钟', '10-30 分钟', '30 分钟以上'],
+            q14: ['企业微信', '微信小程序', '电脑网页', '手机 App', '公司现有学习平台', '其他'],
+            q15: [
+                '政策和规则速查',
+                '知识卡片（每日或每周推送）',
+                '题库和随堂测验',
+                '案例库（各区域最佳实践）',
+                'AI 问答助手',
+                '同事问答社区',
+                '岗位学习地图（新人入门路径）',
+                '学习打卡和积分排名',
+                '资料库（PPT、模板、制度文件）',
+                '个人学习进度和报告'
+            ],
+            q16: ['每天', '每周 2-3 次', '每周 1 次', '每月 1-2 次', '不需要推送，需要时自己查'],
+            q18: ['愿意定期供稿或出题', '愿意分享一次经验', '愿意参与审核', '暂不方便']
+        };
+
+        // ==================== 2. 状态管理 ====================
+        let currentStep = 0; // 0: 欢迎页, 1~5: 问卷五部分, 6: 完成页
+        let currentQrType = 'all';
+
+        const surveyData = {
+            q1: '',
+            q2: '',
+            q3: '',
+            q4: [],
+            q5: null,
+            q6: '',
+            q7: [],
+            q8: {}, // { index: { need: 1-5, mastery: 1-5 } }
+            q9: {}, // { index: { need: 1-5, mastery: 1-5 } }
+            q10: '',
+            q11: [],
+            q13: '',
+            q14: '',
+            q15: {}, // { index: 1-5 }
+            q16: '',
+            q17: '',
+            q18: '',
+            q19: ''
+        };
+
+        // 模拟历史样本库（包含真实提交后追加的数据，用于在分析看板中演示“缺口分析”与“岗位交叉对比”）
+        let submittedRecords = [
+            {
+                q1: '渠道岗', q2: '1-3 年',
+                q8: { 0:{need:4,mastery:3}, 1:{need:5,mastery:2}, 2:{need:5,mastery:2}, 3:{need:5,mastery:1}, 4:{need:4,mastery:3}, 5:{need:5,mastery:2}, 6:{need:4,mastery:3}, 7:{need:3,mastery:3}, 8:{need:4,mastery:4}, 9:{need:5,mastery:3} },
+                q9: {}
+            },
+            {
+                q1: '生态岗', q2: '1 年以内',
+                q8: { 0:{need:3,mastery:2}, 1:{need:4,mastery:2}, 2:{need:3,mastery:2}, 3:{need:4,mastery:2}, 4:{need:4,mastery:2}, 5:{need:5,mastery:2}, 6:{need:5,mastery:3}, 7:{need:3,mastery:2}, 8:{need:3,mastery:2}, 9:{need:4,mastery:2} },
+                q9: { 0:{need:5,mastery:2}, 1:{need:5,mastery:1}, 2:{need:5,mastery:2}, 3:{need:4,mastery:2}, 4:{need:5,mastery:2}, 5:{need:4,mastery:2}, 6:{need:4,mastery:3}, 7:{need:5,mastery:2}, 8:{need:4,mastery:3} }
+            },
+            {
+                q1: '大区经理', q2: '5 年以上',
+                q8: { 0:{need:3,mastery:5}, 1:{need:4,mastery:4}, 2:{need:4,mastery:4}, 3:{need:5,mastery:3}, 4:{need:4,mastery:4}, 5:{need:5,mastery:3}, 6:{need:5,mastery:3}, 7:{need:4,mastery:4}, 8:{need:4,mastery:5}, 9:{need:5,mastery:4} },
+                q9: { 0:{need:4,mastery:3}, 1:{need:5,mastery:3}, 2:{need:5,mastery:2}, 3:{need:3,mastery:4}, 4:{need:5,mastery:3}, 5:{need:4,mastery:3}, 6:{need:3,mastery:3}, 7:{need:5,mastery:3}, 8:{need:4,mastery:4} }
+            }
+        ];
+
+        // ==================== 3. 初始化与渲染 ====================
+        window.addEventListener('DOMContentLoaded', () => {
+            initQRCodes();
+            renderAllFormElements();
+            checkUrlParams();
+        });
+
+        // 检查URL中是否携带扫码专属路径参数（如 ?role=channel 或 ?role=eco）
+        function checkUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const roleParam = params.get('role');
+            if (roleParam === 'channel') {
+                selectQ1('渠道岗');
+                showToast('已通过渠道岗专属码进入，自动为您匹配精简路径');
+            } else if (roleParam === 'eco') {
+                selectQ1('生态岗');
+                showToast('已通过生态岗专属码进入，已为您开启生态专项模块');
+            }
+        }
+
+        // 生成二维码（首页小码 + 弹窗高清大码）
+        function initQRCodes() {
+            const baseUrl = getCleanShareUrl('all');
+            const miniContainer = document.getElementById('mini-qrcode');
+            miniContainer.innerHTML = '';
+            new QRCode(miniContainer, {
+                text: baseUrl,
+                width: 66,
+                height: 66,
+                colorDark: '#0f766e',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.M
+            });
+
+            renderModalQr(baseUrl);
+        }
+
+        function getCleanShareUrl(type) {
+            let url = window.location.href.split('?')[0];
+            if (!url.startsWith('http')) {
+                // 若在本地或沙盒环境预览，提供一个标准的模拟小程序短链，确保二维码始终清晰可扫
+                url = 'https://mce-learning.miniprogram.app/survey';
+            }
+            if (type === 'channel') return `${url}?role=channel`;
+            if (type === 'eco') return `${url}?role=eco`;
+            return url;
+        }
+
+        function renderModalQr(url) {
+            const modalQrContainer = document.getElementById('modal-qrcode');
+            modalQrContainer.innerHTML = '';
+            new QRCode(modalQrContainer, {
+                text: url,
+                width: 172,
+                height: 172,
+                colorDark: '#0f172a',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        function updateQrUrl(type) {
+            currentQrType = type;
+            const url = getCleanShareUrl(type);
+            renderModalQr(url);
+
+            const tag = document.getElementById('qr-mode-tag');
+            const btns = ['all', 'channel', 'eco'];
+            btns.forEach(b => {
+                const el = document.getElementById(`qr-btn-${b}`);
+                if (b === type) {
+                    el.className = 'py-1 px-2 rounded-lg text-[11px] font-semibold bg-white text-teal-800 transition shadow-sm';
+                } else {
+                    el.className = 'py-1 px-2 rounded-lg text-[11px] font-medium bg-white/15 text-white hover:bg-white/25 transition';
+                }
+            });
+
+            if (type === 'all') tag.textContent = '通用全岗位码';
+            if (type === 'channel') tag.textContent = '渠道岗专属码';
+            if (type === 'eco') tag.textContent = '生态岗专属码';
+        }
+
+        // 渲染所有题目DOM
+        function renderAllFormElements() {
+            // Q1 岗位类型
+            const q1Container = document.getElementById('q1-options');
+            q1Container.innerHTML = SURVEY_CONFIG.q1.map(item => `
+                <div onclick="selectQ1('${item.value}')" id="q1-opt-${item.value}" class="option-card p-3.5 rounded-xl border-2 border-slate-100 bg-slate-50/50 cursor-pointer flex items-center justify-between">
+                    <div class="space-y-0.5">
+                        <div class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <span>${item.value}</span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded font-medium ${item.color === 'sky' ? 'bg-sky-100 text-sky-700' : 'bg-indigo-100 text-indigo-700'}">${item.tag}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-500">${item.desc}</p>
+                    </div>
+                    <div class="w-5 h-5 rounded-full border-2 border-slate-300 flex items-center justify-center q1-radio">
+                        <div class="w-2.5 h-2.5 rounded-full bg-teal-600 hidden q1-dot"></div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Q2 工作年限
+            renderSingleChoice('q2-options', SURVEY_CONFIG.q2, 'q2');
+
+            // Q4 获取知识方式（多选）
+            renderMultiChoice('q4-options', SURVEY_CONFIG.q4, 'q4', 99);
+
+            // Q5 快速找到资料（1-5分）
+            const q5Container = document.getElementById('q5-options');
+            q5Container.innerHTML = [1, 2, 3, 4, 5].map(num => `
+                <button type="button" onclick="selectQ5(${num})" id="q5-btn-${num}" class="score-btn py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-bold text-sm hover:border-teal-400">
+                    ${num} 分
+                </button>
+            `).join('');
+
+            // Q7 阻碍学习原因（最多选3项）
+            renderMultiChoice('q7-options', SURVEY_CONFIG.q7, 'q7', 3);
+
+            // Q8 全员能力评分矩阵
+            renderMatrixQuestions('q8-list', SURVEY_CONFIG.q8, 'q8');
+
+            // Q9 生态/管理专项评分矩阵
+            renderMatrixQuestions('q9-list', SURVEY_CONFIG.q9, 'q9');
+
+            // Q11 内容形式（最多选2项）
+            renderMultiChoice('q11-options', SURVEY_CONFIG.q11, 'q11', 2);
+
+            // Q13 单次学习时长
+            renderSingleChoice('q13-options', SURVEY_CONFIG.q13, 'q13');
+
+            // Q14 方便入口
+            renderSingleChoice('q14-options', SURVEY_CONFIG.q14, 'q14');
+
+            // Q15 功能期待程度 (1-5分)
+            const q15Container = document.getElementById('q15-list');
+            q15Container.innerHTML = SURVEY_CONFIG.q15.map((feat, idx) => `
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 space-y-2">
+                    <div class="text-xs font-semibold text-slate-800">${idx + 1}. ${feat}</div>
+                    <div class="grid grid-cols-5 gap-1.5">
+                        ${[1, 2, 3, 4, 5].map(score => `
+                            <button type="button" onclick="selectQ15(${idx}, ${score})" id="q15-${idx}-${score}" class="score-btn py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-xs font-semibold">
+                                ${score}分
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            // Q16 推送频率
+            renderSingleChoice('q16-options', SURVEY_CONFIG.q16, 'q16');
+
+            // Q18 贡献意愿
+            renderSingleChoice('q18-options', SURVEY_CONFIG.q18, 'q18');
+        }
+
+        function renderSingleChoice(containerId, options, key) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = options.map((opt, idx) => `
+                <div onclick="selectSingle('${key}', '${opt}', '${containerId}')" data-val="${opt}" class="option-card p-3 rounded-xl border border-slate-200 bg-slate-50/60 cursor-pointer flex items-center justify-between text-xs font-medium text-slate-700">
+                    <span>${opt}</span>
+                    <span class="w-4 h-4 rounded-full border border-slate-300 flex items-center justify-center check-circle">
+                        <span class="w-2 h-2 rounded-full bg-teal-600 hidden check-dot"></span>
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        function renderMultiChoice(containerId, options, key, maxLimit) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = options.map(opt => `
+                <div onclick="toggleMulti('${key}', '${opt}', '${containerId}', ${maxLimit})" data-val="${opt}" class="option-card p-3 rounded-xl border border-slate-200 bg-slate-50/60 cursor-pointer flex items-center justify-between gap-2 text-xs font-medium text-slate-700">
+                    <span class="leading-snug">${opt}</span>
+                    <span class="w-4 h-4 rounded border border-slate-300 flex items-center justify-center shrink-0 check-box">
+                        <svg class="w-3 h-3 text-white hidden check-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        function renderMatrixQuestions(containerId, items, key) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = items.map((topic, idx) => `
+                <div id="${key}-card-${idx}" class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-100 space-y-2.5 transition-colors">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="text-xs font-bold text-slate-800 leading-snug">
+                            <span class="inline-block px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 text-[10px] mr-1">${idx + 1}</span>
+                            ${topic}
+                        </div>
+                        <span id="${key}-status-${idx}" class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-400 shrink-0">待评分</span>
+                    </div>
+
+                    <!-- 维度1：需要程度 -->
+                    <div class="flex items-center justify-between gap-2 pt-1">
+                        <span class="text-[11px] font-semibold text-teal-700 w-16 shrink-0">需要程度</span>
+                        <div class="grid grid-cols-5 gap-1.5 flex-1">
+                            ${[1, 2, 3, 4, 5].map(val => `
+                                <button type="button" onclick="setMatrixScore('${key}', ${idx}, 'need', ${val})" id="${key}-${idx}-need-${val}" class="score-btn py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-xs font-bold">
+                                    ${val}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+
+                    <!-- 维度2：当前掌握度 -->
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-[11px] font-semibold text-indigo-700 w-16 shrink-0">当前掌握</span>
+                        <div class="grid grid-cols-5 gap-1.5 flex-1">
+                            ${[1, 2, 3, 4, 5].map(val => `
+                                <button type="button" onclick="setMatrixScore('${key}', ${idx}, 'mastery', ${val})" id="${key}-${idx}-mastery-${val}" class="score-btn py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-xs font-bold">
+                                    ${val}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ==================== 4. 交互与路径分流逻辑 ====================
+        function selectQ1(role) {
+            surveyData.q1 = role;
+            SURVEY_CONFIG.q1.forEach(item => {
+                const el = document.getElementById(`q1-opt-${item.value}`);
+                const dot = el.querySelector('.q1-dot');
+                const radio = el.querySelector('.q1-radio');
+                if (item.value === role) {
+                    el.classList.remove('border-slate-100', 'bg-slate-50/50');
+                    el.classList.add('border-teal-500', 'bg-teal-50/40');
+                    radio.classList.add('border-teal-600');
+                    dot.classList.remove('hidden');
+                } else {
+                    el.classList.add('border-slate-100', 'bg-slate-50/50');
+                    el.classList.remove('border-teal-500', 'bg-teal-50/40');
+                    radio.classList.remove('border-teal-600');
+                    dot.classList.add('hidden');
+                }
+            });
+
+            // 更新顶部角色徽章与第三步路径分流配置
+            const badge = document.getElementById('role-badge');
+            badge.textContent = role;
+            badge.classList.remove('hidden');
+
+            applyRolePathLogic(role);
+        }
+
+        // 核心分流逻辑：渠道岗跳过 Q9，生态岗/大区经理/项目经理显示并要求作答 Q9
+        function applyRolePathLogic(role) {
+            const q9Section = document.getElementById('q9-section');
+            const banner = document.getElementById('path-notice-banner');
+            const q9RoleName = document.getElementById('q9-role-name');
+
+            if (role === '渠道岗') {
+                q9Section.classList.add('hidden');
+                banner.className = 'rounded-xl p-3 text-xs flex items-start gap-2 border bg-sky-50 border-sky-200 text-sky-800';
+                banner.innerHTML = `<span class="text-base leading-none">🚀</span><div><strong>已启用【渠道岗精简路径】：</strong>系统已为您自动跳过“生态岗专项模块(Q9)”，仅需完成以下 10 项渠道核心主题评估即可。</div>`;
+            } else {
+                q9Section.classList.remove('hidden');
+                q9RoleName.textContent = role;
+                banner.className = 'rounded-xl p-3 text-xs flex items-start gap-2 border bg-indigo-50 border-indigo-200 text-indigo-800';
+                banner.innerHTML = `<span class="text-base leading-none">🎯</span><div><strong>已启用【${role}完整路径】：</strong>除全员通用主题(Q8)外，本页底部已为您展开 9 项生态与业务运营专项评估(Q9)。</div>`;
+            }
+        }
+
+        function selectSingle(key, val, containerId) {
+            surveyData[key] = val;
+            const container = document.getElementById(containerId);
+            container.querySelectorAll('.option-card').forEach(card => {
+                const isSelected = card.getAttribute('data-val') === val;
+                const circle = card.querySelector('.check-circle');
+                const dot = card.querySelector('.check-dot');
+                if (isSelected) {
+                    card.classList.add('border-teal-500', 'bg-teal-50/50', 'text-teal-800', 'font-bold');
+                    circle.classList.add('border-teal-600');
+                    dot.classList.remove('hidden');
+                } else {
+                    card.classList.remove('border-teal-500', 'bg-teal-50/50', 'text-teal-800', 'font-bold');
+                    circle.classList.remove('border-teal-600');
+                    dot.classList.add('hidden');
+                }
+            });
+        }
+
+        function toggleMulti(key, val, containerId, maxLimit) {
+            const arr = surveyData[key];
+            const idx = arr.indexOf(val);
+            if (idx > -1) {
+                arr.splice(idx, 1);
+            } else {
+                if (arr.length >= maxLimit) {
+                    showToast(`本题最多只能选择 ${maxLimit} 项哦`);
+                    return;
+                }
+                arr.push(val);
+            }
+
+            const container = document.getElementById(containerId);
+            container.querySelectorAll('.option-card').forEach(card => {
+                const isSelected = arr.includes(card.getAttribute('data-val'));
+                const box = card.querySelector('.check-box');
+                const icon = card.querySelector('.check-icon');
+                if (isSelected) {
+                    card.classList.add('border-teal-500', 'bg-teal-50/50', 'text-teal-800', 'font-bold');
+                    box.classList.add('bg-teal-600', 'border-teal-600');
+                    icon.classList.remove('hidden');
+                } else {
+                    card.classList.remove('border-teal-500', 'bg-teal-50/50', 'text-teal-800', 'font-bold');
+                    box.classList.remove('bg-teal-600', 'border-teal-600');
+                    icon.classList.add('hidden');
+                }
+            });
+        }
+
+        function selectQ5(score) {
+            surveyData.q5 = score;
+            [1, 2, 3, 4, 5].forEach(num => {
+                const btn = document.getElementById(`q5-btn-${num}`);
+                if (num === score) {
+                    btn.className = 'score-btn py-3 rounded-xl border-2 border-teal-600 bg-teal-600 text-white font-bold text-sm shadow-sm';
+                } else {
+                    btn.className = 'score-btn py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-bold text-sm hover:border-teal-400';
+                }
+            });
+        }
+
+        function setMatrixScore(key, idx, dim, val) {
+            if (!surveyData[key][idx]) surveyData[key][idx] = {};
+            surveyData[key][idx][dim] = val;
+
+            // 更新按钮高亮
+            [1, 2, 3, 4, 5].forEach(num => {
+                const btn = document.getElementById(`${key}-${idx}-${dim}-${num}`);
+                if (num === val) {
+                    btn.className = dim === 'need'
+                        ? 'score-btn py-1.5 rounded-lg border border-teal-600 bg-teal-600 text-white text-xs font-bold shadow-sm'
+                        : 'score-btn py-1.5 rounded-lg border border-indigo-600 bg-indigo-600 text-white text-xs font-bold shadow-sm';
+                } else {
+                    btn.className = 'score-btn py-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-600 text-xs font-bold';
+                }
+            });
+
+            // 检查该项双维度是否都已填写
+            const itemObj = surveyData[key][idx];
+            const statusEl = document.getElementById(`${key}-status-${idx}`);
+            const cardEl = document.getElementById(`${key}-card-${idx}`);
+            if (itemObj.need && itemObj.mastery) {
+                const gap = itemObj.need - itemObj.mastery;
+                statusEl.textContent = gap > 0 ? `缺口 +${gap}` : '已评估';
+                statusEl.className = gap >= 2
+                    ? 'text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold shrink-0'
+                    : 'text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-semibold shrink-0';
+                cardEl.classList.remove('border-rose-300');
+                cardEl.classList.add('border-slate-100');
+            }
+
+            // 更新计数器
+            const total = SURVEY_CONFIG[key].length;
+            let completed = 0;
+            for (let i = 0; i < total; i++) {
+                if (surveyData[key][i]?.need && surveyData[key][i]?.mastery) completed++;
+            }
+            const counterEl = document.getElementById(`${key}-counter`);
+            if (counterEl) {
+                counterEl.textContent = key === 'q8' ? `${completed}/${total} 项已评` : `${completed}/${total}`;
+            }
+        }
+
+        function selectQ15(idx, score) {
+            surveyData.q15[idx] = score;
+            [1, 2, 3, 4, 5].forEach(num => {
+                const btn = document.getElementById(`q15-${idx}-${num}`);
+                if (num === score) {
+                    btn.className = 'score-btn py-1.5 rounded-lg border border-teal-600 bg-teal-600 text-white text-xs font-bold shadow-sm';
+                } else {
+                    btn.className = 'score-btn py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 text-xs font-semibold';
+                }
+            });
+        }
+
+        // ==================== 5. 步骤导航与校验 ====================
+        function startSurvey() {
+            goToStep(1);
+        }
+
+        function handleBack() {
+            if (currentStep > 1 && currentStep <= 5) {
+                prevStep();
+            } else {
+                goToStep(0);
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                goToStep(currentStep - 1);
+            }
+        }
+
+        function nextStep() {
+            if (!validateStep(currentStep)) return;
+
+            if (currentStep < 5) {
+                goToStep(currentStep + 1);
+            } else {
+                submitSurvey();
+            }
+        }
+
+        function goToStep(step) {
+            currentStep = step;
+            // 隐藏所有视图
+            document.getElementById('view-welcome').classList.add('hidden');
+            for (let i = 1; i <= 5; i++) {
+                document.getElementById(`view-step-${i}`).classList.add('hidden');
+            }
+            document.getElementById('view-complete').classList.add('hidden');
+
+            const progressWrapper = document.getElementById('progress-wrapper');
+            const btnBack = document.getElementById('btn-back');
+            const footerWelcome = document.getElementById('footer-welcome');
+            const footerSteps = document.getElementById('footer-steps');
+            const bottomBar = document.getElementById('bottom-bar');
+
+            if (step === 0) {
+                document.getElementById('view-welcome').classList.remove('hidden');
+                progressWrapper.classList.add('hidden');
+                btnBack.classList.add('hidden');
+                bottomBar.classList.remove('hidden');
+                footerWelcome.classList.remove('hidden');
+                footerSteps.classList.add('hidden');
+            } else if (step >= 1 && step <= 5) {
+                document.getElementById(`view-step-${step}`).classList.remove('hidden');
+                progressWrapper.classList.remove('hidden');
+                btnBack.classList.remove('hidden');
+                bottomBar.classList.remove('hidden');
+                footerWelcome.classList.add('hidden');
+                footerSteps.classList.remove('hidden');
+
+                const stepTitles = [
+                    '',
+                    '第一部分：基本信息 (1/5)',
+                    '第二部分：学习现状 (2/5)',
+                    '第三部分：学习内容需求 (3/5)',
+                    '第四部分：学习工具偏好 (4/5)',
+                    '第五部分：反馈与贡献 (5/5)'
+                ];
+                document.getElementById('step-label').textContent = stepTitles[step];
+                const pct = step * 20;
+                document.getElementById('progress-percent').textContent = `${pct}%`;
+                document.getElementById('progress-bar').style.width = `${pct}%`;
+
+                document.getElementById('btn-prev').style.visibility = step === 1 ? 'hidden' : 'visible';
+                document.getElementById('btn-next').textContent = step === 5 ? '提交问卷' : '下一步';
+            } else if (step === 6) {
+                document.getElementById('view-complete').classList.remove('hidden');
+                progressWrapper.classList.add('hidden');
+                btnBack.classList.remove('hidden');
+                bottomBar.classList.add('hidden');
+            }
+
+            document.getElementById('main-scroll').scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function validateStep(step) {
+            if (step === 1) {
+                if (!surveyData.q1) { showToast('请选择您的岗位类型 (Q1)'); return false; }
+                if (!surveyData.q2) { showToast('请选择您的工作年限 (Q2)'); return false; }
+                return true;
+            }
+            if (step === 2) {
+                if (surveyData.q4.length === 0) { showToast('请至少选择一项获取知识的方式 (Q4)'); return false; }
+                if (!surveyData.q5) { showToast('请为知识查找便捷度打分 (Q5)'); return false; }
+                if (!surveyData.q6.trim()) { showToast('请填写最近希望有人教您的事 (Q6)'); return false; }
+                if (surveyData.q7.length === 0) { showToast('请至少选择一项阻碍学习的原因 (Q7)'); return false; }
+                return true;
+            }
+            if (step === 3) {
+                // 校验 Q8 全员 10 项
+                for (let i = 0; i < SURVEY_CONFIG.q8.length; i++) {
+                    const item = surveyData.q8[i];
+                    if (!item || !item.need || !item.mastery) {
+                        const card = document.getElementById(`q8-card-${i}`);
+                        card.classList.add('border-rose-300');
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        showToast(`请完成 Q8 第 ${i + 1} 项的「需要程度」和「当前掌握」评分`);
+                        return false;
+                    }
+                }
+                // 若非渠道岗，校验 Q9 9 项
+                if (surveyData.q1 !== '渠道岗') {
+                    for (let i = 0; i < SURVEY_CONFIG.q9.length; i++) {
+                        const item = surveyData.q9[i];
+                        if (!item || !item.need || !item.mastery) {
+                            const card = document.getElementById(`q9-card-${i}`);
+                            card.classList.add('border-rose-300');
+                            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            showToast(`请完成 Q9 专项第 ${i + 1} 项的双向评分`);
+                            return false;
+                        }
+                    }
+                }
+                if (!surveyData.q10.trim()) { showToast('请填写 Q10 希望学习的补充主题（无则填“暂无”）'); return false; }
+                return true;
+            }
+            if (step === 4) {
+                if (surveyData.q11.length === 0) { showToast('请选择您喜欢的内容形式 (Q11)'); return false; }
+                if (!surveyData.q13) { showToast('请选择单次学习的合适时长 (Q12)'); return false; }
+                if (!surveyData.q14) { showToast('请选择最方便使用的入口 (Q13)'); return false; }
+                for (let i = 0; i < SURVEY_CONFIG.q15.length; i++) {
+                    if (!surveyData.q15[i]) {
+                        showToast(`请为第 ${i + 1} 项小工具功能打分 (Q14)`);
+                        return false;
+                    }
+                }
+                if (!surveyData.q16) { showToast('请选择希望收到推送的频率 (Q15)'); return false; }
+                return true;
+            }
+            if (step === 5) {
+                if (!surveyData.q18) { showToast('请选择是否愿意贡献内容 (Q17)'); return false; }
+                return true;
+            }
+            return true;
+        }
+
+        // ==================== 6. 提交与缺口计算 ====================
+        function submitSurvey() {
+            // 存入内存样本库以便看板实时反映
+            submittedRecords.push(JSON.parse(JSON.stringify(surveyData)));
+
+            // 计算当前填写人的个人缺口 TOP 5
+            const gaps = [];
+            SURVEY_CONFIG.q8.forEach((topic, idx) => {
+                const s = surveyData.q8[idx];
+                gaps.push({ topic, tag: '渠道通用', need: s.need, mastery: s.mastery, gap: s.need - s.mastery });
+            });
+            if (surveyData.q1 !== '渠道岗') {
+                SURVEY_CONFIG.q9.forEach((topic, idx) => {
+                    const s = surveyData.q9[idx];
+                    gaps.push({ topic, tag: '生态专项', need: s.need, mastery: s.mastery, gap: s.need - s.mastery });
+                });
+            }
+
+            // 按缺口降序，缺口相同按需要程度降序
+            gaps.sort((a, b) => (b.gap - a.gap) || (b.need - a.need));
+            const top5 = gaps.slice(0, 5);
+
+            const listEl = document.getElementById('personal-gap-list');
+            listEl.innerHTML = top5.map((item, i) => `
+                <div class="p-3 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-between gap-2">
+                    <div class="space-y-1 flex-1">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-4 h-4 rounded-full bg-teal-600 text-white text-[10px] font-bold flex items-center justify-center shrink-0">${i + 1}</span>
+                            <span class="text-xs font-bold text-slate-800 line-clamp-1">${item.topic}</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-[11px] text-slate-500 pl-5">
+                            <span class="px-1.5 py-0.2 rounded bg-white border border-slate-200 text-[10px]">${item.tag}</span>
+                            <span>需要 ${item.need}分</span>
+                            <span>·</span>
+                            <span>掌握 ${item.mastery}分</span>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0">
+                        <div class="text-xs font-extrabold ${item.gap > 0 ? 'text-amber-600' : 'text-teal-600'}">
+                            ${item.gap > 0 ? `缺口 +${item.gap}` : `缺口 ${item.gap}`}
+                        </div>
+                        <div class="text-[10px] text-slate-400">优先级</div>
+                    </div>
+                </div>
+            `).join('');
+
+            goToStep(6);
+            showToast('提交成功！已生成学习缺口诊断');
+        }
+
+        // ==================== 7. 二维码海报保存与复制链接 ====================
+        function openQrModal() {
+            document.getElementById('modal-qr').classList.remove('hidden');
+        }
+
+        function closeQrModal() {
+            document.getElementById('modal-qr').classList.add('hidden');
+        }
+
+        function copySurveyLink() {
+            const url = getCleanShareUrl(currentQrType);
+            const tempInput = document.createElement('input');
+            tempInput.value = url;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast('问卷链接已复制，可直接粘贴发送至微信群！');
+        }
+
+        // 将二维码导出为高清带标题图片下载
+        function downloadQrImage() {
+            const qrCanvas = document.querySelector('#modal-qrcode canvas');
+            if (!qrCanvas) {
+                showToast('二维码生成中，请稍候再试');
+                return;
+            }
+
+            // 创建合成海报 Canvas
+            const poster = document.createElement('canvas');
+            poster.width = 600;
+            poster.height = 760;
+            const ctx = poster.getContext('2d');
+
+            // 背景渐变
+            const grad = ctx.createLinearGradient(0, 0, 600, 760);
+            grad.addColorStop(0, '#0f766e');
+            grad.addColorStop(1, '#0f172a');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 600, 760);
+
+            // 标题文字
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 34px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('MCE 团队学习需求调研问卷', 300, 105);
+
+            ctx.fillStyle = '#99f6e4';
+            ctx.font = '22px sans-serif';
+            const subTitle = currentQrType === 'channel' ? '【渠道岗专属通道 · 约5分钟】'
+                           : currentQrType === 'eco' ? '【生态岗专属通道 · 约5分钟】'
+                           : '渠道岗 / 生态岗智能分流 · 匿名填写';
+            ctx.fillText(subTitle, 300, 150);
+
+            // 白色二维码圆角底板
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.roundRect(120, 200, 360, 410, 28);
+            ctx.fill();
+
+            // 绘制二维码
+            ctx.drawImage(qrCanvas, 155, 225, 290, 290);
+
+            // 底部扫码提示
+            ctx.fillStyle = '#334155';
+            ctx.font = 'bold 22px sans-serif';
+            ctx.fillText('微信扫一扫 · 立即参与调研', 300, 565);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '18px sans-serif';
+            ctx.fillText('结果将用于设计 MCE 团队专属学习小工具', 300, 680);
+
+            // 触发下载
+            const link = document.createElement('a');
+            link.download = `MCE学习需求调研码_${currentQrType}.png`;
+            link.href = poster.toDataURL('image/png');
+            link.click();
+            showToast('调研二维码海报已开始下载！');
+        }
+
+        // ==================== 8. 发布者数据分析看板（缺口排序 + 岗位交叉） ====================
+        function openAnalyticsModal() {
+            document.getElementById('modal-analytics').classList.remove('hidden');
+            renderAnalytics('all');
+        }
+
+        function closeAnalyticsModal() {
+            document.getElementById('modal-analytics').classList.add('hidden');
+        }
+
+        function renderAnalytics(filter) {
+            ['all', 'channel', 'eco'].forEach(t => {
+                const btn = document.getElementById(`tab-ana-${t}`);
+                btn.className = t === filter
+                    ? 'px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-600 text-white transition'
+                    : 'px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 transition';
+            });
+
+            const filtered = submittedRecords.filter(r => {
+                if (filter === 'channel') return r.q1 === '渠道岗';
+                if (filter === 'eco') return r.q1 !== '渠道岗';
+                return true;
+            });
+
+            const body = document.getElementById('analytics-body');
+            if (filtered.length === 0) {
+                body.innerHTML = `<div class="text-center py-12 text-xs text-slate-400">该岗位暂无调研样本数据</div>`;
+                return;
+            }
+
+            // 汇总计算平均需要度、掌握度与缺口
+            const stats = [];
+            SURVEY_CONFIG.q8.forEach((topic, idx) => {
+                let sumNeed = 0, sumMastery = 0, count = 0;
+                filtered.forEach(r => {
+                    if (r.q8 && r.q8[idx]) {
+                        sumNeed += r.q8[idx].need;
+                        sumMastery += r.q8[idx].mastery;
+                        count++;
+                    }
+                });
+                if (count > 0) {
+                    const avgNeed = +(sumNeed / count).toFixed(1);
+                    const avgMastery = +(sumMastery / count).toFixed(1);
+                    stats.push({ topic, group: '通用/渠道', avgNeed, avgMastery, gap: +(avgNeed - avgMastery).toFixed(1) });
+                }
+            });
+
+            if (filter !== 'channel') {
+                SURVEY_CONFIG.q9.forEach((topic, idx) => {
+                    let sumNeed = 0, sumMastery = 0, count = 0;
+                    filtered.forEach(r => {
+                        if (r.q1 !== '渠道岗' && r.q9 && r.q9[idx]) {
+                            sumNeed += r.q9[idx].need;
+                            sumMastery += r.q9[idx].mastery;
+                            count++;
+                        }
+                    });
+                    if (count > 0) {
+                        const avgNeed = +(sumNeed / count).toFixed(1);
+                        const avgMastery = +(sumMastery / count).toFixed(1);
+                        stats.push({ topic, group: '生态专项', avgNeed, avgMastery, gap: +(avgNeed - avgMastery).toFixed(1) });
+                    }
+                });
+            }
+
+            stats.sort((a, b) => b.gap - a.gap);
+
+            body.innerHTML = `
+                <div class="grid grid-cols-3 gap-2.5">
+                    <div class="bg-white p-3 rounded-xl border border-slate-100 text-center">
+                        <div class="text-lg font-extrabold text-teal-600">${filtered.length}</div>
+                        <div class="text-[11px] text-slate-500">有效样本数</div>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-100 text-center">
+                        <div class="text-lg font-extrabold text-amber-600">+${stats[0]?.gap || 0}</div>
+                        <div class="text-[11px] text-slate-500">最大能力缺口</div>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border border-slate-100 text-center">
+                        <div class="text-lg font-extrabold text-indigo-600">${stats.filter(s => s.gap >= 1.5).length} 项</div>
+                        <div class="text-[11px] text-slate-500">高优开发内容</div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl p-4 border border-slate-100 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-xs font-bold text-slate-800">🔥 学习缺口优先级排序（需要 - 掌握）</h4>
+                        <span class="text-[10px] text-slate-400">建议优先纳入小工具</span>
+                    </div>
+                    <div class="space-y-3">
+                        ${stats.map((s, idx) => `
+                            <div class="space-y-1 pb-2.5 border-b border-slate-50 last:border-none last:pb-0">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="text-xs font-semibold text-slate-800 leading-snug">
+                                        <span class="text-teal-600 font-bold mr-1">#${idx + 1}</span>${s.topic}
+                                    </div>
+                                    <span class="px-2 py-0.5 rounded text-[11px] font-bold shrink-0 ${s.gap >= 2 ? 'bg-rose-50 text-rose-600' : s.gap > 0 ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-500'}">
+                                        缺口 ${s.gap > 0 ? '+' + s.gap : s.gap}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-3 text-[11px] text-slate-500">
+                                    <span class="px-1.5 py-0.2 rounded bg-slate-100 text-[10px]">${s.group}</span>
+                                    <span>需要均分：<strong class="text-teal-700">${s.avgNeed}</strong></span>
+                                    <span>掌握均分：<strong class="text-indigo-700">${s.avgMastery}</strong></span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function resetSurveyConfirm() {
+            goToStep(0);
+            showToast('已返回问卷首页');
+        }
+
+        let toastTimer = null;
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.classList.remove('hidden');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 2400);
+        }
+    </script>
+</body>
+</html>
